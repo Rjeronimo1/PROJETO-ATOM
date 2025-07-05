@@ -1,0 +1,31 @@
+{
+  "name": "atom-ai",
+  "version": "1.0.0",
+  "description": "ATOM - Adaptive Tactical Operating Machine",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "bridge": "node src/bridge.js"
+  },
+  "keywords": [
+    "trading",
+    "ai",
+    "mt5",
+    "smc",
+    "ict",
+    "autonomous"
+  ],
+  "author": "Roberto",
+  "license": "MIT",
+  "devDependencies": {
+    "vite": "^5.2.0"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "say": "^0.16.0"
+  }
+}

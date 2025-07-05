@@ -1,0 +1,13 @@
+{
+  "tipo": "abrir_ordem",
+  "parametros": {
+    "ativo": "EURUSD",
+    "tipo": "buy",
+    "lote": 0.10,
+    "sl": 20,
+    "tp": 40,
+    "magic": 123456,
+    "comentario": "ordem_teste_atom"
+  },
+  "ts": 1728021234567
+}
