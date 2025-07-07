@@ -1,57 +1,22 @@
-/**********************************************************************
- * executorMT5.js — Executor de Ordens via arquivos-sinal
- * ------------------------------------------------------
- * Gera JSONs em /sinais que serão consumidos pela Bridge/MetaTrader.
- *********************************************************************/
-
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname  = path.dirname(__filename);
-
-// Diretório onde a Bridge vigia sinais
-const pastaSinais = path.resolve(__dirname, "../../sinais");
-
-class ExecutorMT5 {
-  constructor() {
-    this.diretorio = pastaSinais;
-    this.criarDiretorioSeNaoExistir();
-  }
-
-  criarDiretorioSeNaoExistir() {
-    if (!fs.existsSync(this.diretorio)) {
-      fs.mkdirSync(this.diretorio, { recursive: true });
-    }
-  }
-
-  executar(acao = "compra", ativo = "EURUSD", volume = 0.10) {
-    const sinal = {
-      tipo: acao,
-      parametros: { ativo, volume },
-      ts: Date.now()
+// src/executor/executorMT5.js
+export async function executarOrdem(tipo) {
+  try {
+    const corpo = {
+      tipo,
+      symbol: "BTCUSD",       // ← pode futuramente deixar dinâmico
+      volume: 0.02
     };
 
-    const nomeArquivo = `sinal_${acao}_${Date.now()}.json`;
-    const caminho     = path.join(this.diretorio, nomeArquivo);
+    const res = await fetch("http://localhost:3001/api/ordem", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(corpo)
+    });
 
-    fs.writeFileSync(caminho, JSON.stringify(sinal, null, 2));
-    console.log(`📤 Sinal "${acao}" salvo em ${nomeArquivo}`);
+    if (!res.ok) throw new Error(await res.text());
+    const { ok, detalhe } = await res.json();
+    console.log(`🟢 ${ok ? "OK" : "Erro"}: ${detalhe}`);
+  } catch (err) {
+    console.error("❌ Erro ao enviar ordem:", err.message);
   }
-
-  enviarOrdem(tipo, dados = {}) {
-    const { ativo = "EURUSD", volume = 0.10 } = dados;
-    this.executar(tipo, ativo, volume);
-  }
-
-  fecharOrdem()        { console.log("⚠️  fecharOrdem não implementado"); }
-  ajustarStop()        { console.log("⚠️  ajustarStop não implementado"); }
-  pausarSistema()      { console.log("⏸️  Sistema MT5 pausado (stub)"); }
-  retomarSistema()     { console.log("▶️  Sistema MT5 retomado (stub)"); }
-  abrirEditor()        { console.log("🛠️  Abrir MetaEditor (stub)"); }
-  enviarMsg()          { console.log("💬 enviarMsg (stub)"); }
 }
-
-// ✅ Exportação direta e correta
-export { ExecutorMT5 };

@@ -1,19 +1,28 @@
 // src/ui/painel.js
+import { logMensagem }      from "/src/logger/logger.js";
+import { atualizarGrafico } from "/src/grafico/graficoLive.js";
+import { executarOrdem }    from "/src/executor/executorMT5.js";  // integra MT5
 
-import { logMensagem } from "../logger/logger.js";
-import { atualizarGrafico } from "../grafico/graficoLive.js";
+document.addEventListener("DOMContentLoaded", () => {
+  const botaoCompra = document.getElementById("btn-buy");
+  const botaoVenda  = document.getElementById("btn-sell");
+  const botaoFechar = document.getElementById("btn-close");
 
-document.getElementById("btn-buy").addEventListener("click", () => {
-  logMensagem("Ordem de COMPRA enviada.");
-  atualizarGrafico(Math.random() * 150);
-});
+  botaoCompra.addEventListener("click", () => {
+    logMensagem("Ordem de COMPRA enviada.");
+    executarOrdem("buy");
+    atualizarGrafico(Math.random() * 150);
+  });
 
-document.getElementById("btn-sell").addEventListener("click", () => {
-  logMensagem("Ordem de VENDA enviada.");
-  atualizarGrafico(Math.random() * 150);
-});
+  botaoVenda.addEventListener("click", () => {
+    logMensagem("Ordem de VENDA enviada.");
+    executarOrdem("sell");
+    atualizarGrafico(Math.random() * 150);
+  });
 
-document.getElementById("btn-close").addEventListener("click", () => {
-  logMensagem("Todas as ordens foram FECHADAS.");
-  atualizarGrafico(Math.random() * 150);
+  botaoFechar.addEventListener("click", () => {
+    logMensagem("Todas as ordens foram FECHADAS.");
+    executarOrdem("fechar");
+    atualizarGrafico(Math.random() * 150);
+  });
 });
