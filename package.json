@@ -27,6 +27,7 @@
     "chokidar": "^4.0.3",
     "cors": "^2.8.5",
     "express": "^5.1.0",
+    "lodash.debounce": "^4.0.8",
     "say": "^0.16.0",
     "uuid": "^11.1.0"
   }
