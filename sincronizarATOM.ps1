@@ -17,8 +17,5 @@ git commit -m "$mensagem"
 # Enviar para o GitHub
 git push origin main
 
-# Log para debug local (opcional)
+# Log para debug local
 "$data | Commit automático executado com sucesso" | Out-File -Append "$projeto\log_sheldon.txt"
-
-# Para debug manual
-Read-Host "Pressione Enter para fechar"
