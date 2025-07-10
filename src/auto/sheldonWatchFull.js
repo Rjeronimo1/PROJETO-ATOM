@@ -1,9 +1,10 @@
-// sheldonWatchFull.js - Modo contínuo global ATOM ativado por Sheldon
+// sheldonWatchFull.js - Modo contínuo global ATOM com debounce ativado
 
 import chokidar from 'chokidar';
 import { execSync } from 'child_process';
 import { appendFileSync } from 'fs';
 import path from 'path';
+import debounce from 'lodash.debounce';
 
 const projetoPath = path.resolve();
 const logPath = path.join(projetoPath, 'log_sheldon.txt');
@@ -12,7 +13,7 @@ const logPath = path.join(projetoPath, 'log_sheldon.txt');
 const incluir = ['src', 'sinais', 'books', 'mql5', 'logs', 'tests', 'config', 'atom'];
 const ignorar = ['node_modules', '.git', 'videos'];
 
-// Filtro de extensões a ignorar
+// Extensões a ignorar
 const ignorarExtensoes = ['.log', '.tmp', '.DS_Store'];
 
 function logar(msg) {
@@ -21,7 +22,8 @@ function logar(msg) {
   console.log(`[Sheldon] ${msg}`);
 }
 
-function executarGitAuto(filepath) {
+// Função protegida por debounce (2 segundos)
+const executarGitAuto = debounce((filepath) => {
   try {
     execSync('git add .', { cwd: projetoPath });
     execSync(`git commit -m "Sheldon: atualização automática (${filepath})"`, { cwd: projetoPath });
@@ -30,7 +32,7 @@ function executarGitAuto(filepath) {
   } catch (erro) {
     logar(`ERRO ao tentar atualizar ${filepath}: ${erro.message}`);
   }
-}
+}, 2000); // 2 segundos
 
 function deveMonitorar(filePath) {
   const relativo = path.relative(projetoPath, filePath);
@@ -39,7 +41,7 @@ function deveMonitorar(filePath) {
   return true;
 }
 
-logar('🔁 Sheldon em modo contínuo global (watch full)');
+logar('🔁 Sheldon em modo contínuo global (watch full com debounce)');
 
 const watcher = chokidar.watch(incluir.map(p => path.join(projetoPath, p)), {
   ignored: /(^|[\\/])\../, // ignora arquivos ocultos
