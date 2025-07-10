@@ -24,6 +24,7 @@
     "vite": "^5.2.0"
   },
   "dependencies": {
+    "chokidar": "^4.0.3",
     "cors": "^2.8.5",
     "express": "^5.1.0",
     "say": "^0.16.0",
