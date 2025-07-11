@@ -4,29 +4,30 @@ import { exec } from 'child_process';
 import path from 'path';
 import fs from 'fs';
 
-const caminhoMonitorado = path.resolve('src/executor');
+const raizProjeto = path.resolve('.');
+const arquivosPermitidos = ['.js', '.json', '.mq5', '.css', '.html'];
+const pastaMonitorada = path.join(raizProjeto, 'src');
 
-console.log("🟢 Sheldon ativo em modo contínuo.");
-console.log("📁 Monitorando:", caminhoMonitorado);
+console.log("🟢 [SheldonSync] Ativo – Monitorando alterações no projeto completo");
 
-const watcher = chokidar.watch(caminhoMonitorado, {
-  ignored: /(^|[\/\\])\../,
-  persistent: true
+const watcher = chokidar.watch(pastaMonitorada, {
+  ignored: (caminho) => caminho.includes('node_modules') || caminho.includes('.git'),
+  persistent: true,
+  ignoreInitial: true
 });
 
-watcher.on('change', (filePath) => {
-  const nomeArquivo = path.basename(filePath);
-  console.log(`📝 Alteração detectada em: ${nomeArquivo}`);
+watcher.on('change', (arquivoModificado) => {
+  const ext = path.extname(arquivoModificado);
+  if (!arquivosPermitidos.includes(ext)) return;
 
-  exec(`
-    git add .
-    git commit -m "Atualização automática: ${nomeArquivo}"
-    git push
-  `, (err, stdout, stderr) => {
+  const nome = path.relative(raizProjeto, arquivoModificado);
+  console.log(`📝 Alteração detectada em: ${nome}`);
+  
+  exec(`git add "${arquivoModificado}" && git commit -m "🚀 Sync automático: ${nome}" && git push`, (err, stdout, stderr) => {
     if (err) {
-      console.error("❌ Erro ao sincronizar:", stderr);
+      console.error("❌ Erro no sync:", stderr);
     } else {
-      console.log("✅ Sincronização concluída:", stdout);
+      console.log("✅ Commit e push realizados com sucesso.");
     }
   });
 });
