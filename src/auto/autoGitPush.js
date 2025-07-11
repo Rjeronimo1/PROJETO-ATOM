@@ -1,26 +1,28 @@
-// autoGitPush.js — Sincronização automática com o GitHub a cada 1 hora
-const { exec } = require("child_process");
+// src/auto/autoGitPush.js — Sincronização automática com GitHub (versão ES Modules)
+// -----------------------------------------------------------------------------
 
-// Função principal de sincronização
-function autoSyncGit() {
-  const hora = new Date().toLocaleTimeString("pt-PT", { hour12: false });
-  console.log(`[${hora}] 🔄 Iniciando sincronização automática com GitHub...`);
+import { exec } from "child_process";
+import { setInterval } from "timers";
 
-  exec(`git add . && git commit -m "Auto sync ATOM [${hora}]" && git push`, (err, stdout, stderr) => {
-    if (err) {
-      if (stderr.includes("nothing to commit")) {
-        console.log(`[${hora}] ⚠️ Nenhuma alteração detectada para commit.`);
-      } else {
-        console.error(`[${hora}] ❌ Erro ao sincronizar com GitHub:\n${stderr}`);
-      }
-    } else {
-      console.log(`[${hora}] ✅ GitHub sincronizado com sucesso!\n${stdout}`);
+// Função de push automático
+function sincronizarComGitHub() {
+  console.log("🌀 Verificando atualizações para commit...");
+
+  const comando = `
+    git add src/
+    git commit -m "🔁 Atualização automática dos módulos do ATOM"
+    git push
+  `;
+
+  exec(comando, (erro, stdout, stderr) => {
+    if (erro) {
+      console.error("❌ Erro ao executar push automático:", erro.message);
+      return;
     }
+    if (stderr) console.warn("⚠️ Saída padrão de erro:", stderr);
+    if (stdout) console.log("✅ Resultado do push:\n", stdout);
   });
 }
 
-// Executa a cada 1 hora (3600000 milissegundos)
-setInterval(autoSyncGit, 3600000);
-
-// Executa imediatamente na inicialização
-autoSyncGit();
+// Executa a cada 1h (3600000 ms)
+setInterval(sincronizarComGitHub, 3600000);
