@@ -1,12 +1,9 @@
 {
   "name": "atom-ai",
   "version": "1.0.0",
+  "type": "module",
   "description": "ATOM - Adaptive Tactical Operating Machine",
   "main": "index.js",
-  {
-  "type": "module",
-  ...
-}
   "scripts": {
     "dev": "vite",
     "build": "vite build",

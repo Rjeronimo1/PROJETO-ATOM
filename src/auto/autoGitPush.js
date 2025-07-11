@@ -1,28 +1,17 @@
-// src/auto/autoGitPush.js — Sincronização automática com GitHub (versão ES Modules)
-// -----------------------------------------------------------------------------
+// src/auto/autoGitPush.js — Loop de commit automático horário
+import { sincronizarGitAuto } from "./sheldonSync.js";
 
-import { exec } from "child_process";
-import { setInterval } from "timers";
+// Intervalo: 1 hora = 60 min × 60 s × 1000 ms = 3.600.000 ms
+const INTERVALO_HORARIO = 3600000;
 
-// Função de push automático
-function sincronizarComGitHub() {
-  console.log("🌀 Verificando atualizações para commit...");
+function iniciarLoopDePush() {
+  console.log("⏱️ Git auto-push ativado a cada 1 hora...");
+  sincronizarGitAuto(); // Primeira execução imediata
 
-  const comando = `
-    git add src/
-    git commit -m "🔁 Atualização automática dos módulos do ATOM"
-    git push
-  `;
-
-  exec(comando, (erro, stdout, stderr) => {
-    if (erro) {
-      console.error("❌ Erro ao executar push automático:", erro.message);
-      return;
-    }
-    if (stderr) console.warn("⚠️ Saída padrão de erro:", stderr);
-    if (stdout) console.log("✅ Resultado do push:\n", stdout);
-  });
+  setInterval(() => {
+    console.log("⏳ Executando push automático...");
+    sincronizarGitAuto();
+  }, INTERVALO_HORARIO);
 }
 
-// Executa a cada 1h (3600000 ms)
-setInterval(sincronizarComGitHub, 3600000);
+iniciarLoopDePush();
