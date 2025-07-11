@@ -1,67 +1,76 @@
-// src/auto/atomSync.js — Sincronização TOTAL e SEGURA do projeto ATOM
+// atomSync.js — Único módulo para criar, salvar, versionar e sincronizar todo o projeto ATOM
 import chokidar from "chokidar";
 import { exec } from "child_process";
+import fs from "fs";
 import path from "path";
-import { fileURLToPath } from "url";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// Diretório raiz do projeto ATOM
+const raiz = path.resolve(".");
 
-const pastasMonitoradas = [
-  path.join(__dirname, "../../src"),
-  path.join(__dirname, "../../sinais"),
-  path.join(__dirname, "../../config"),
-  path.join(__dirname, "../../mql5"),
-  path.join(__dirname, "../../logs"),
-  path.join(__dirname, "../../tests"),
-  path.join(__dirname, "../../atom"),
-];
+// 1. Função UNIVERSAL para criar/atualizar qualquer arquivo (writer embutido)
+export function salvarBloco({ caminhoRelativo, conteudo }) {
+  const caminho = path.join(raiz, caminhoRelativo);
+  const pasta = path.dirname(caminho);
 
-console.log("🟢 atomSync ativo — monitorando todas as pastas ATOM");
+  if (!fs.existsSync(pasta)) fs.mkdirSync(pasta, { recursive: true });
+  fs.writeFileSync(caminho, conteudo, "utf8");
+  console.log(`📝 Bloco salvo: ${caminhoRelativo}`);
+}
 
-const watcher = chokidar.watch(pastasMonitoradas, {
-  ignored: /(^|[\/\\])\../,
-  persistent: true
-});
+// 2. Debounce para sync automático (acumula eventos em 5s)
+let debounceTimer = null;
+let arquivosPendentes = new Set();
 
-// Evita múltiplos pushs simultâneos
-let emExecucao = false;
-let pendente = false;
-let ultimoArquivo = null;
+function syncGit() {
+  if (arquivosPendentes.size === 0) return;
+  const hora = new Date().toLocaleTimeString("pt-PT");
+  const arquivos = Array.from(arquivosPendentes).join(", ");
+  arquivosPendentes.clear();
 
-function commitPush(filePath) {
-  const nome = path.basename(filePath);
-  const hora = new Date().toLocaleTimeString("pt-PT", { hour12: false });
-
-  // Bloqueio de concorrência
-  if (emExecucao) {
-    pendente = true;
-    ultimoArquivo = filePath;
-    return;
-  }
-  emExecucao = true;
-
-  exec(`git add . && git commit -m "ATOM auto-sync (${nome} @ ${hora})" && git push`, (err, stdout, stderr) => {
-    emExecucao = false;
-    if (pendente) {
-      pendente = false;
-      setTimeout(() => commitPush(ultimoArquivo), 350); // executa push pendente
-    }
+  const msg = `ATOM auto-sync (${arquivos} @ ${hora})`;
+  console.log(`[${hora}] ⏳ Commit/push automático: ${arquivos}`);
+  exec(`git add . && git commit -m "${msg}" && git push`, (err, stdout, stderr) => {
     if (err) {
       if (stderr && stderr.includes("nothing to commit")) {
-        console.log(`[${hora}] ⚠️ Nada novo para commitar (${nome})`);
+        console.log(`[${hora}] ⚠️ Nada novo para commitar (${arquivos})`);
       } else {
-        console.error(`[${hora}] ❌ Erro ao sync:`, stderr ? stderr.trim() : err.message);
+        console.error(`[${hora}] ❌ Erro ao sync:`, stderr.trim());
       }
     } else {
-      console.log(`[${hora}] ✅ Commit/push automático: ${nome}`);
+      console.log(`[${hora}] ✅ Commit/push automático concluído.`);
     }
   });
 }
 
-watcher
-  .on("add",    commitPush)
-  .on("change", commitPush)
-  .on("unlink", commitPush);
+function debounceSyncGit() {
+  if (debounceTimer) clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(syncGit, 5000); // 5 segundos
+}
 
-console.log("🚀 Toda alteração será sincronizada no GitHub imediatamente.");
+// 3. Watch universal
+const watcher = chokidar.watch(raiz, {
+  ignored: /(^|[\/\\])\..|node_modules|logs|\.git|\.DS_Store|deprecated/,
+  persistent: true,
+  ignoreInitial: true,
+  depth: 8,
+});
+
+watcher.on("all", (event, filePath) => {
+  const rel = path.relative(raiz, filePath);
+  arquivosPendentes.add(rel);
+  debounceSyncGit();
+});
+
+// 4. Exemplo de chamada programática da função de gravação (pode ser chamada por Sheldon direto)
+if (process.env.ATOMWRITE) {
+  // Exemplo: node atomSync.js write src/blocoTeste.js "console.log('olá')"
+  const [,, cmd, destino, ...resto] = process.argv;
+  if (cmd === "write") {
+    const conteudo = resto.join(" ");
+    salvarBloco({ caminhoRelativo: destino, conteudo });
+    // Não precisa commitar, watcher faz automaticamente
+    process.exit(0);
+  }
+}
+
+console.log("🟢 atomSync.js operacional — grava, monitora e sincroniza automaticamente o projeto ATOM.");
