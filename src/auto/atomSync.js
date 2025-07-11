@@ -24,11 +24,25 @@ if (process.argv[1] === decodeURI(new URL(import.meta.url).pathname)) {
   if (cmd === "write" && destino && resto.length > 0) {
     const conteudo = resto.join(" ");
     salvarBloco({ caminhoRelativo: destino, conteudo });
-    setTimeout(() => process.exit(0), 500); // Delay para garantir detecção pelo watcher
+    // Sincronização git direta e imediata:
+    const hora = new Date().toLocaleTimeString("pt-PT");
+    const msg = `ATOM auto-sync (write: ${destino} @ ${hora})`;
+    exec(`git add . && git commit -m "${msg}" && git push`, (err, stdout, stderr) => {
+      if (err) {
+        if (stderr && stderr.includes("nothing to commit")) {
+          console.log(`[${hora}] ⚠️ Nada novo para commitar (${destino})`);
+        } else {
+          console.error(`[${hora}] ❌ Erro ao sync:`, stderr.trim());
+        }
+      } else {
+        console.log(`[${hora}] ✅ Commit/push automático concluído (write).`);
+      }
+      setTimeout(() => process.exit(0), 300);
+    });
   }
 }
 
-// Watcher universal, sincronização em tempo real
+// Watcher universal, sincronização em tempo real (para alterações manuais)
 let debounceTimer = null;
 let arquivosPendentes = new Set();
 
@@ -66,7 +80,6 @@ const watcher = chokidar.watch(raiz, {
 
 watcher.on("all", (event, filePath) => {
   const rel = path.relative(raiz, filePath);
-  console.log(`[DEBUG] Evento: ${event} em ${rel}`);
   arquivosPendentes.add(rel);
   debounceSyncGit();
 });
