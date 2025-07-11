@@ -1,39 +1,38 @@
-/**********************************************************************
- * main.js — Inicialização do painel ATOM + histórico de logs
- * -------------------------------------------------------------------
- * 1) Mostra o histórico de logs em <ul id="lista-historico">
- * 2) Inicia o executor de setups cíclico
- *********************************************************************/
-
-// Ajuste de import: usa obterLogs do log central
-import { obterLogs } from "./log.js";
+// src/main.js — Inicializador técnico do núcleo ATOM
+import { iniciarIA } from "./ai/inteligencia.js";
 import { iniciarExecutorDeSetups } from "./executor/setupExecutor.js";
+import { ATOM_CORE } from "./core/core.js";
+import { falarTexto } from "./infra/audio.js";
+import {
+  verificarInstalacaoTerminal,
+  iniciarTerminalMT5,
+  implantarEA
+} from "./bridge/executorMT5.js";
 
-/* ----------------------------------------------------------
- * Renderiza o log em <ul id="lista-historico">
- * ---------------------------------------------------------*/
-function preencherHistorico() {
-  const lista = document.getElementById("lista-historico");
-  if (!lista) return;
+// Inicialização principal do ATOM
+function iniciarATOM() {
+  if (!ATOM_CORE.systemReady) {
+    console.warn("⏳ Sistema ainda não pronto. Tentando novamente...");
+    setTimeout(iniciarATOM, 500);
+    return;
+  }
 
-  lista.innerHTML = "";                           // limpa
-  const logs = obterLogs();                       // [{ tipo, mensagem, ts }]
-  logs.slice().reverse().forEach(({ tipo, mensagem, ts }) => {
-    const li = document.createElement("li");
-    li.textContent = `[${new Date(ts).toLocaleTimeString()}] ${mensagem}`;
-    li.className = `log-${tipo}`;                 // permite estilizar por CSS
-    lista.appendChild(li);
-  });
+  try {
+    iniciarIA();
+    iniciarExecutorDeSetups();
+
+    if (verificarInstalacaoTerminal()) {
+      iniciarTerminalMT5();
+      const caminhoEA = "C:/Users/rober/Documents/MetaTrader 5/MQL5/Experts/ATLAS_SMC_2.7_PRO.ex5";
+      implantarEA(caminhoEA);
+    }
+
+    falarTexto("ATOM inicializado com sucesso.");
+    console.log("✅ ATOM pronto para operar.");
+  } catch (erro) {
+    console.error("❌ Falha na inicialização do ATOM:", erro);
+    falarTexto("Erro na inicialização.");
+  }
 }
 
-/* ----------------------------------------------------------
- * Eventos
- * ---------------------------------------------------------*/
-// Atualiza em tempo-real sempre que um novo log é emitido
-document.addEventListener("novoLog", preencherHistorico);
-
-// Inicialização: DOM pronto
-window.addEventListener("DOMContentLoaded", () => {
-  preencherHistorico();
-  iniciarExecutorDeSetups();                      // loop setups
-});
+iniciarATOM();
