@@ -1,23 +1,36 @@
-// atomSync.js — Único módulo para criar, salvar, versionar e sincronizar todo o projeto ATOM
+// src/auto/atomSync.js — Gera blocos, grava e faz sync com GitHub
+
 import chokidar from "chokidar";
 import { exec } from "child_process";
 import fs from "fs";
 import path from "path";
 
-// Diretório raiz do projeto ATOM
+// Diretório raiz do projeto
 const raiz = path.resolve(".");
 
-// 1. Função UNIVERSAL para criar/atualizar qualquer arquivo (writer embutido)
+console.log("🟢 atomSync.js operacional — grava e sincroniza automaticamente.");
+
+// --- Função UNIVERSAL: grava arquivo automaticamente ---
 export function salvarBloco({ caminhoRelativo, conteudo }) {
   const caminho = path.join(raiz, caminhoRelativo);
   const pasta = path.dirname(caminho);
-
   if (!fs.existsSync(pasta)) fs.mkdirSync(pasta, { recursive: true });
   fs.writeFileSync(caminho, conteudo, "utf8");
-  console.log(`📝 Bloco salvo: ${caminhoRelativo}`);
+  console.log(`📝 Bloco salvo automaticamente: ${caminhoRelativo}`);
 }
 
-// 2. Debounce para sync automático (acumula eventos em 5s)
+// --- Função para rodar via comando terminal, para testes e validação ---
+if (require.main === module) {
+  const [,, cmd, destino, ...resto] = process.argv;
+  if (cmd === "write" && destino && resto.length > 0) {
+    const conteudo = resto.join(" ");
+    salvarBloco({ caminhoRelativo: destino, conteudo });
+    // O watcher abaixo vai cuidar do commit/push automático
+    process.exit(0);
+  }
+}
+
+// --- Watcher universal, sincronização em tempo real ---
 let debounceTimer = null;
 let arquivosPendentes = new Set();
 
@@ -26,7 +39,6 @@ function syncGit() {
   const hora = new Date().toLocaleTimeString("pt-PT");
   const arquivos = Array.from(arquivosPendentes).join(", ");
   arquivosPendentes.clear();
-
   const msg = `ATOM auto-sync (${arquivos} @ ${hora})`;
   console.log(`[${hora}] ⏳ Commit/push automático: ${arquivos}`);
   exec(`git add . && git commit -m "${msg}" && git push`, (err, stdout, stderr) => {
@@ -44,10 +56,9 @@ function syncGit() {
 
 function debounceSyncGit() {
   if (debounceTimer) clearTimeout(debounceTimer);
-  debounceTimer = setTimeout(syncGit, 5000); // 5 segundos
+  debounceTimer = setTimeout(syncGit, 5000);
 }
 
-// 3. Watch universal
 const watcher = chokidar.watch(raiz, {
   ignored: /(^|[\/\\])\..|node_modules|logs|\.git|\.DS_Store|deprecated/,
   persistent: true,
@@ -60,17 +71,3 @@ watcher.on("all", (event, filePath) => {
   arquivosPendentes.add(rel);
   debounceSyncGit();
 });
-
-// 4. Exemplo de chamada programática da função de gravação (pode ser chamada por Sheldon direto)
-if (process.env.ATOMWRITE) {
-  // Exemplo: node atomSync.js write src/blocoTeste.js "console.log('olá')"
-  const [,, cmd, destino, ...resto] = process.argv;
-  if (cmd === "write") {
-    const conteudo = resto.join(" ");
-    salvarBloco({ caminhoRelativo: destino, conteudo });
-    // Não precisa commitar, watcher faz automaticamente
-    process.exit(0);
-  }
-}
-
-console.log("🟢 atomSync.js operacional — grava, monitora e sincroniza automaticamente o projeto ATOM.");
