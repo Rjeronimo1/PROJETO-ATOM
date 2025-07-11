@@ -1,85 +1,39 @@
-// src/auto/atomSync.js — Gera blocos, grava e faz sync com GitHub em tempo real
+// src/auto/atomSyncLatenode.js
+// Função para enviar arquivos/blocos para o endpoint Latenode, que grava e faz push automático no GitHub
 
-import chokidar from "chokidar";
-import { exec } from "child_process";
-import fs from "fs";
-import path from "path";
+import fetch from "node-fetch"; // npm install node-fetch
 
-const raiz = path.resolve(".");
+const ENDPOINT_LATENODE = "https://webhook.latenode.com/71206/dev/c7783145-189e-47e3-b729-b241498339cd";
 
-console.log("🟢 atomSync.js operacional — grava e sincroniza automaticamente.");
-
-// Função UNIVERSAL: grava arquivo automaticamente
-export function salvarBloco({ caminhoRelativo, conteudo }) {
-  const caminho = path.join(raiz, caminhoRelativo);
-  const pasta = path.dirname(caminho);
-  if (!fs.existsSync(pasta)) fs.mkdirSync(pasta, { recursive: true });
-  fs.writeFileSync(caminho, conteudo, "utf8");
-  console.log(`📝 Bloco salvo automaticamente: ${caminhoRelativo}`);
-}
-
-// Função para rodar via comando terminal
-if (process.argv[1] === decodeURI(new URL(import.meta.url).pathname)) {
-  const [,, cmd, destino, ...resto] = process.argv;
-  if (cmd === "write" && destino && resto.length > 0) {
-    const conteudo = resto.join(" ");
-    salvarBloco({ caminhoRelativo: destino, conteudo });
-    // Sincronização git direta e imediata:
-    const hora = new Date().toLocaleTimeString("pt-PT");
-    const msg = `ATOM auto-sync (write: ${destino} @ ${hora})`;
-    exec(`git add . && git commit -m "${msg}" && git push`, (err, stdout, stderr) => {
-      if (err) {
-        if (stderr && stderr.includes("nothing to commit")) {
-          console.log(`[${hora}] ⚠️ Nada novo para commitar (${destino})`);
-        } else {
-          console.error(`[${hora}] ❌ Erro ao sync:`, stderr.trim());
-        }
-      } else {
-        console.log(`[${hora}] ✅ Commit/push automático concluído (write).`);
-      }
-      setTimeout(() => process.exit(0), 300);
+// Função principal: envia arquivo/bloco para o Latenode, que grava e faz o push
+export async function gravarBlocoNoGitHub({ caminhoRelativo, conteudo }) {
+  try {
+    const resposta = await fetch(ENDPOINT_LATENODE, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        caminho: caminhoRelativo,
+        conteudo: conteudo
+      })
     });
+    if (!resposta.ok) {
+      throw new Error(`Erro ao enviar para Latenode: ${await resposta.text()}`);
+    }
+    console.log(`✅ Bloco enviado para o GitHub via Latenode: ${caminhoRelativo}`);
+  } catch (erro) {
+    console.error("❌ Falha ao gravar bloco no GitHub:", erro.message);
   }
 }
 
-// Watcher universal, sincronização em tempo real (para alterações manuais)
-let debounceTimer = null;
-let arquivosPendentes = new Set();
-
-function syncGit() {
-  if (arquivosPendentes.size === 0) return;
-  const hora = new Date().toLocaleTimeString("pt-PT");
-  const arquivos = Array.from(arquivosPendentes).join(", ");
-  arquivosPendentes.clear();
-  const msg = `ATOM auto-sync (${arquivos} @ ${hora})`;
-  console.log(`[${hora}] ⏳ Commit/push automático: ${arquivos}`);
-  exec(`git add . && git commit -m "${msg}" && git push`, (err, stdout, stderr) => {
-    if (err) {
-      if (stderr && stderr.includes("nothing to commit")) {
-        console.log(`[${hora}] ⚠️ Nada novo para commitar (${arquivos})`);
-      } else {
-        console.error(`[${hora}] ❌ Erro ao sync:`, stderr.trim());
-      }
-    } else {
-      console.log(`[${hora}] ✅ Commit/push automático concluído.`);
-    }
-  });
+// --- Exemplo de uso direto ---
+// Comente ou remova se for importar de outro módulo
+if (process.argv[2] === "teste") {
+  // Exemplo: node src/auto/atomSyncLatenode.js teste src/testeSheldon/blocoAuto.js "// Exemplo\nconsole.log('Bloco criado via Sheldon!')"
+  const [, , , caminho, ...resto] = process.argv;
+  if (!caminho || resto.length === 0) {
+    console.log("Uso: node atomSyncLatenode.js teste <caminhoRelativo> <conteudo>");
+    process.exit(1);
+  }
+  const conteudo = resto.join(" ");
+  gravarBlocoNoGitHub({ caminhoRelativo: caminho, conteudo });
 }
-
-function debounceSyncGit() {
-  if (debounceTimer) clearTimeout(debounceTimer);
-  debounceTimer = setTimeout(syncGit, 5000);
-}
-
-const watcher = chokidar.watch(raiz, {
-  ignored: /(^|[\/\\])\..|node_modules|logs|\.git|\.DS_Store|deprecated/,
-  persistent: true,
-  ignoreInitial: true,
-  depth: 8,
-});
-
-watcher.on("all", (event, filePath) => {
-  const rel = path.relative(raiz, filePath);
-  arquivosPendentes.add(rel);
-  debounceSyncGit();
-});
