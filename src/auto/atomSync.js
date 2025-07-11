@@ -20,7 +20,7 @@ export function salvarBloco({ caminhoRelativo, conteudo }) {
 }
 
 // --- Função para rodar via comando terminal, para testes e validação ---
-if (require.main === module) {
+if (process.argv[1] === decodeURI(new URL(import.meta.url).pathname)) {
   const [,, cmd, destino, ...resto] = process.argv;
   if (cmd === "write" && destino && resto.length > 0) {
     const conteudo = resto.join(" ");
