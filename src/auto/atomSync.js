@@ -1,16 +1,15 @@
-// src/auto/atomSync.js — Gera blocos, grava e faz sync com GitHub
+// src/auto/atomSync.js — Gera blocos, grava e faz sync com GitHub em tempo real
 
 import chokidar from "chokidar";
 import { exec } from "child_process";
 import fs from "fs";
 import path from "path";
 
-// Diretório raiz do projeto
 const raiz = path.resolve(".");
 
 console.log("🟢 atomSync.js operacional — grava e sincroniza automaticamente.");
 
-// --- Função UNIVERSAL: grava arquivo automaticamente ---
+// Função UNIVERSAL: grava arquivo automaticamente
 export function salvarBloco({ caminhoRelativo, conteudo }) {
   const caminho = path.join(raiz, caminhoRelativo);
   const pasta = path.dirname(caminho);
@@ -19,18 +18,17 @@ export function salvarBloco({ caminhoRelativo, conteudo }) {
   console.log(`📝 Bloco salvo automaticamente: ${caminhoRelativo}`);
 }
 
-// --- Função para rodar via comando terminal, para testes e validação ---
+// Função para rodar via comando terminal
 if (process.argv[1] === decodeURI(new URL(import.meta.url).pathname)) {
   const [,, cmd, destino, ...resto] = process.argv;
   if (cmd === "write" && destino && resto.length > 0) {
     const conteudo = resto.join(" ");
     salvarBloco({ caminhoRelativo: destino, conteudo });
-    // O watcher abaixo vai cuidar do commit/push automático
-    process.exit(0);
+    setTimeout(() => process.exit(0), 500); // Delay para garantir detecção pelo watcher
   }
 }
 
-// --- Watcher universal, sincronização em tempo real ---
+// Watcher universal, sincronização em tempo real
 let debounceTimer = null;
 let arquivosPendentes = new Set();
 
@@ -68,6 +66,7 @@ const watcher = chokidar.watch(raiz, {
 
 watcher.on("all", (event, filePath) => {
   const rel = path.relative(raiz, filePath);
+  console.log(`[DEBUG] Evento: ${event} em ${rel}`);
   arquivosPendentes.add(rel);
   debounceSyncGit();
 });
