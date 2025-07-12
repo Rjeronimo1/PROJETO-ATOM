@@ -1,34 +1,18 @@
-[
-  {
-    "caminho": "src/estrategias/setupAbertura.js",
-    "conteudo": "// Estratégia de abertura automática\nconsole.log('Setup pronto!');"
+{
+  "src": {
+    "estrategias": {
+      "setupAbertura.js": "// Estratégia de abertura automática\nconsole.log('Setup de abertura pronto.');",
+      "setupFechamento.js": "// Estratégia de fechamento automática\nconsole.log('Setup de fechamento pronto.');"
+    },
+    "sinais": {
+      "blocoTesteSheldon.js": "// Criado automaticamente por Sheldon\nconsole.log('Teste completo ATOM Codex!');"
+    },
+    "utils": {
+      "calculos.js": "// Funções utilitárias de cálculo\n"
+    }
   },
-  {
-    "caminho": "src/estrategias/setupFechamento.js",
-    "conteudo": "// Estratégia de fechamento automática\nconsole.log('Fechamento pronto!');"
+  "docs": {
+    "manual.md": "# Manual do Projeto ATOM\nDocumentação inicial."
   },
-  {
-    "caminho": "src/A/testeA.js",
-    "conteudo": "// Teste A\nconsole.log('A');"
-  },
-  {
-    "caminho": "src/B/testeB.js",
-    "conteudo": "// Teste B\nconsole.log('B');"
-  },
-  {
-    "caminho": "src/C/testeC.js",
-    "conteudo": "// Teste C\nconsole.log('C');"
-  },
-  {
-    "caminho": "src/G/testeG.js",
-    "conteudo": "// Teste G\nconsole.log('G');"
-  },
-  {
-    "caminho": "src/W/testeW.js",
-    "conteudo": "// Teste W\nconsole.log('W');"
-  },
-  {
-    "caminho": "src/Z/testeZ.js",
-    "conteudo": "// Teste Z\nconsole.log('Z');"
-  }
-]
+  "README.md": "# Projeto ATOM\nAutomação ativa."
+}
