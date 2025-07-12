@@ -8,7 +8,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "bridge": "node src/bridge.js"
+    "bridge": "node src/bridge.js",
+    "testar": "node src/testarAprovacao.js"
   },
   "keywords": [
     "trading",
@@ -24,11 +25,15 @@
     "vite": "^5.2.0"
   },
   "dependencies": {
+    "@octokit/rest": "^22.0.0",
     "chokidar": "^4.0.3",
     "cors": "^2.8.5",
+    "dotenv": "^17.2.0",
     "express": "^5.1.0",
     "lodash.debounce": "^4.0.8",
+    "node-fetch": "^3.3.2",
     "say": "^0.16.0",
+    "simple-git": "^3.28.0",
     "uuid": "^11.1.0"
   }
 }
