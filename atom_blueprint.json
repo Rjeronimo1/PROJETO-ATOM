@@ -1,0 +1,18 @@
+{
+  "src": {
+    "estrategias": {
+      "setupAbertura.js": "// Estratégia de abertura automática\nconsole.log('Setup pronto!');",
+      "setupFechamento.js": "// Estratégia de fechamento automática\nconsole.log('Fechamento pronto!');"
+    },
+    "utils": {},
+    "sinais": {},
+    "A": {},
+    "B": {},
+    "C": {},
+    "G": {},
+    "W": {},
+    "Z": {}
+  },
+  "docs": {},
+  "README.md": "# Projeto ATOM\n"
+}
