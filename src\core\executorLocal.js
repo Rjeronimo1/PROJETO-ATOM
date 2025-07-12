@@ -1,10 +1,27 @@
 // src/core/executorLocal.js
-// Daemon executor local ATOM - Automação total via API
-
 import fs from 'fs';
 import path from 'path';
 import express from 'express';
 import { fileURLToPath } from 'url';
+
+// Função recursiva para criar árvore de arquivos/pastas a partir de blueprint
+function aplicarBlueprint(obj, caminhoAtual) {
+  for (const key in obj) {
+    const value = obj[key];
+    const caminho = path.join(caminhoAtual, key);
+
+    if (typeof value === 'object' && value !== null) {
+      if (!fs.existsSync(caminho)) fs.mkdirSync(caminho, { recursive: true });
+      if (Object.keys(value).length === 0) {
+        fs.writeFileSync(path.join(caminho, '.gitkeep'), '# ATOM: versionamento de pasta');
+      } else {
+        aplicarBlueprint(value, caminho);
+      }
+    } else {
+      fs.writeFileSync(caminho, value, 'utf8');
+    }
+  }
+}
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -37,7 +54,7 @@ app.post('/criar-pasta', (req, res) => {
   res.json({ status: 'ok', pasta: caminhoRelativo });
 });
 
-// (Opcional) Remover arquivo
+// Remover arquivo
 app.post('/deletar-arquivo', (req, res) => {
   const { caminhoRelativo } = req.body;
   if (!caminhoRelativo) return res.status(400).json({ erro: 'Parâmetro obrigatório: caminhoRelativo' });
@@ -51,14 +68,21 @@ app.post('/deletar-arquivo', (req, res) => {
   }
 });
 
-// (Opcional) Commit em lote (gatilho manual)
-app.post('/commit-em-lote', (req, res) => {
-  // Aqui, podemos disparar um comando externo, chamar o orquestrador, etc.
-  console.log('[Sheldon] 🚀 Commit em lote solicitado.');
-  res.json({ status: 'ok', mensagem: 'Commit em lote será processado.' });
+// Endpoint universal de sincronização de blueprint
+app.post('/sincronizar', (req, res) => {
+  let blueprint;
+  try {
+    blueprint = req.body;
+    if (!blueprint || typeof blueprint !== 'object') throw new Error('Blueprint ausente ou inválida');
+    aplicarBlueprint(blueprint, raizProjeto);
+    console.log('[Sheldon] 🚀 Sincronização concluída pelo endpoint /sincronizar!');
+    res.json({ status: 'ok', mensagem: 'Sincronização de blueprint aplicada com sucesso.' });
+  } catch (erro) {
+    console.error('[Sheldon] Erro na sincronização:', erro.message);
+    res.status(500).json({ erro: erro.message });
+  }
 });
 
-// Inicializa servidor na porta 3100
 const PORT = 3100;
 app.listen(PORT, () => {
   console.log(`[Sheldon ExecutorLocal] Ativo em http://localhost:${PORT}`);
