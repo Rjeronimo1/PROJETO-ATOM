@@ -1,18 +1,34 @@
-{
-  "src": {
-    "estrategias": {
-      "setupAbertura.js": "// Estratégia de abertura automática\nconsole.log('Setup pronto!');",
-      "setupFechamento.js": "// Estratégia de fechamento automática\nconsole.log('Fechamento pronto!');"
-    },
-    "utils": {},
-    "sinais": {},
-    "A": {},
-    "B": {},
-    "C": {},
-    "G": {},
-    "W": {},
-    "Z": {}
+[
+  {
+    "caminho": "src/estrategias/setupAbertura.js",
+    "conteudo": "// Estratégia de abertura automática\nconsole.log('Setup pronto!');"
   },
-  "docs": {},
-  "README.md": "# Projeto ATOM\n"
-}
+  {
+    "caminho": "src/estrategias/setupFechamento.js",
+    "conteudo": "// Estratégia de fechamento automática\nconsole.log('Fechamento pronto!');"
+  },
+  {
+    "caminho": "src/A/testeA.js",
+    "conteudo": "// Teste A\nconsole.log('A');"
+  },
+  {
+    "caminho": "src/B/testeB.js",
+    "conteudo": "// Teste B\nconsole.log('B');"
+  },
+  {
+    "caminho": "src/C/testeC.js",
+    "conteudo": "// Teste C\nconsole.log('C');"
+  },
+  {
+    "caminho": "src/G/testeG.js",
+    "conteudo": "// Teste G\nconsole.log('G');"
+  },
+  {
+    "caminho": "src/W/testeW.js",
+    "conteudo": "// Teste W\nconsole.log('W');"
+  },
+  {
+    "caminho": "src/Z/testeZ.js",
+    "conteudo": "// Teste Z\nconsole.log('Z');"
+  }
+]
