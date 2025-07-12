@@ -1,47 +1,53 @@
+// src/core/applyBlueprint.js
 import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import simpleGit from 'simple-git';
 
-// Corrige __dirname no ESM
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Caminho para o blueprint
+// Caminho do blueprint JSON
 const blueprintPath = path.join(__dirname, '..', '..', 'atom_blueprint.json');
-// Raiz do projeto
 const raizProjeto = path.join(__dirname, '..', '..');
+const git = simpleGit(raizProjeto);
 
-async function criarRecursivo(obj, destino) {
-  for (const [nome, valor] of Object.entries(obj)) {
-    const caminhoAtual = path.join(destino, nome);
-    if (typeof valor === 'object') {
-      // Cria pasta se não existir
-      await fs.mkdir(caminhoAtual, { recursive: true });
-      await criarRecursivo(valor, caminhoAtual);
-    } else if (typeof valor === 'string') {
-      // Cria arquivo se não existir
+// Criação recursiva de arquivos/pastas
+async function criarEstrutura(base, estrutura) {
+  for (const [nome, conteudo] of Object.entries(estrutura)) {
+    const caminho = path.join(base, nome);
+
+    if (typeof conteudo === 'string') {
+      // Arquivo
       try {
-        await fs.access(caminhoAtual);
-        console.log(`[SKIP] Arquivo já existe: ${caminhoAtual}`);
+        await fs.access(caminho);
+        console.log(`[SKIP] Arquivo já existe: ${caminho}`);
       } catch {
-        await fs.writeFile(caminhoAtual, valor, 'utf-8');
-        console.log(`[ADD] Arquivo criado: ${caminhoAtual}`);
+        await fs.writeFile(caminho, conteudo, 'utf8');
+        console.log(`[CREATE] Arquivo criado: ${caminho}`);
       }
+    } else {
+      // Pasta
+      await fs.mkdir(caminho, { recursive: true });
+      await criarEstrutura(caminho, conteudo);
     }
   }
 }
 
-async function aplicarBlueprint() {
+// Aplicar blueprint + commit/push
+(async () => {
   try {
-    const blueprintRaw = await fs.readFile(blueprintPath, 'utf-8');
-    const blueprint = JSON.parse(blueprintRaw);
+    const data = await fs.readFile(blueprintPath, 'utf8');
+    const blueprint = JSON.parse(data);
 
-    await criarRecursivo(blueprint, raizProjeto);
+    await criarEstrutura(raizProjeto, blueprint);
 
-    console.log('\x1b[32m[ATOM] Blueprint aplicado com sucesso.\x1b[0m');
+    // Adiciona todas as alterações
+    await git.add('.');
+    await git.commit('[ATOM] Sincronização automática do blueprint');
+    await git.push();
+    console.log('\x1b[32m[ATOM] Blueprint aplicado e push automático realizado com sucesso.\x1b[0m');
   } catch (erro) {
-    console.error('\x1b[31m[ATOM] Erro ao aplicar blueprint:\x1b[0m', erro.message);
+    console.error('\x1b[31m[ERRO] ', erro.message);
   }
-}
-
-aplicarBlueprint();
+})();
