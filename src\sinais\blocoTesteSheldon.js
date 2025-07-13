@@ -1,2 +1,2 @@
-// Criado automaticamente por Sheldon via executorLocal
-console.log("Teste completo ATOM Codex!");
+// Criado automaticamente por Sheldon
+console.log('Teste completo ATOM Codex!');
