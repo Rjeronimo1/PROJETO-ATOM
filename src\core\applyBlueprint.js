@@ -12,20 +12,16 @@ const blueprintPath = path.join(__dirname, '..', '..', 'atom_blueprint.json');
 const raizProjeto = path.join(__dirname, '..', '..');
 const git = simpleGit(raizProjeto);
 
-// Criação recursiva de arquivos/pastas
+// Criação recursiva de arquivos/pastas — sempre atualiza arquivos
 async function criarEstrutura(base, estrutura) {
   for (const [nome, conteudo] of Object.entries(estrutura)) {
     const caminho = path.join(base, nome);
 
     if (typeof conteudo === 'string') {
-      // Arquivo
-      try {
-        await fs.access(caminho);
-        console.log(`[SKIP] Arquivo já existe: ${caminho}`);
-      } catch {
-        await fs.writeFile(caminho, conteudo, 'utf8');
-        console.log(`[CREATE] Arquivo criado: ${caminho}`);
-      }
+      // Arquivo — sempre atualiza/cria
+      await fs.mkdir(path.dirname(caminho), { recursive: true });
+      await fs.writeFile(caminho, conteudo, 'utf8');
+      console.log(`[UPDATE] Arquivo criado/atualizado: ${caminho}`);
     } else {
       // Pasta
       await fs.mkdir(caminho, { recursive: true });
